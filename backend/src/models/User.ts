@@ -1,13 +1,11 @@
-import e from "express";
 import mongoose, { Schema, type Document } from "mongoose";
-import { transpileModule } from "typescript";
 
 export interface IUser extends Document {
     clerkId: string;
     name: string;
     email: string;
     avatar?: string;
-    createAt: Date;
+    createdAt: Date;  // ✅ createdAt (doğru)
     updatedAt: Date;
 }
 
@@ -18,4 +16,4 @@ const UserSchema: Schema = new Schema<IUser>({
     avatar: { type: String, default: "" }
 }, { timestamps: true });
 
-export const User = mongoose.model("User", UserSchema);
+export const User = mongoose.model<IUser>("User", UserSchema);
