@@ -1,6 +1,8 @@
 {
   "dependencies": {
+    "@clerk/clerk-react": "^5.60.0",
     "@clerk/express": "1.7.60",
+    "@clerk/nextjs": "^6.37.3",
     "@types/express": "^5.0.6",
     "cors": "2.8.5",
     "express": "4.21.2",
@@ -12,9 +14,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev":"bun --watch index.ts",
-    "start":"bun index.ts",
-    "build":"bun install "
+    "dev": "bun --watch index.ts",
+    "start": "bun index.ts",
+    "build": "bun install "
   },
   "devDependencies": {
     "@types/bun": "latest"
