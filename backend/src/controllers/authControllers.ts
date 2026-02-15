@@ -27,27 +27,29 @@ export async function authCallback(req: Request, res: Response, next: NextFuncti
             return res.status(400).json({ message: "No user id provided" });
         }
 
-        let user = await User.findOne({ clerkId });
+        const clerkUser = await clerkClient.users.getUser(clerkId);
 
-        if (!user) {
-            const clerkUser = await clerkClient.users.getUser(clerkId);
-
-            user = new User({
+        // ✅ ATOMIC UPSERT - Race condition önlendi
+        const user = await User.findOneAndUpdate(
+            { clerkId },
+            {
                 clerkId,
                 name: clerkUser.firstName
                     ? `${clerkUser.firstName} ${clerkUser.lastName || ''}`.trim()
-                    : clerkUser.emailAddresses[0]?.emailAddress.split("@")[0],
+                    : clerkUser.emailAddresses[0]?.emailAddress?.split("@")[0] || "User",  // ✅ Fallback
                 email: clerkUser.emailAddresses[0]?.emailAddress,
                 avatar: clerkUser.imageUrl,
-            });
-
-            await user.save();
-        }
+            },
+            {
+                upsert: true,             
+                new: true,                 
+                setDefaultsOnInsert: true  
+            }
+        );
 
         res.json({ user });
     } catch (error) {
         console.error("authCallback error:", error);
-        res.status(500);
-        next(error);
+        next(error);  
     }
 }
