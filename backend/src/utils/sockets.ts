@@ -11,8 +11,8 @@ export function initializeSocket(httpServer: HttpServer) {
     const allowedOrigins = [
         "http://localhost:8081",
         "http://localhost:5173",
-        process.env.FRONTEND_URL as string
-    ];
+        process.env.FRONTEND_URL
+    ].filter(Boolean) as string[];  // ✅ undefined'ları filtrele
 
     const io = new SocketServer(httpServer, {
         cors: {
@@ -28,25 +28,27 @@ export function initializeSocket(httpServer: HttpServer) {
             const session = await verifyToken(token, { secretKey: process.env.CLERK_SECRET_KEY! });
             const clerkId = session.sub;
             const user = await User.findOne({ clerkId });
-            if (!user) return next(new Error("User not Found"));
+            if (!user) return next(new Error("User not found"));
             
-            socket.data.userId = user._id.toString(); 
+            socket.data.userId = user._id.toString();
             next();
-
         } catch (error: any) {
-            next(new Error(error));
+            next(new Error(`Authentication failed: ${error.message}`));
         }
     });
 
     io.on("connection", (socket) => {
         const userId = socket.data.userId;
 
+        // ✅ Safety check
+        if (!userId) {
+            socket.disconnect();
+            return;
+        }
+
         socket.emit("online-users", { userIds: Array.from(onlineUsers.keys()) });
-
         onlineUsers.set(userId, socket.id);
-
         socket.broadcast.emit("user-online", { userId });
-
         socket.join(`user:${userId}`);
 
         socket.on("join-chat", (chatId: string) => {
@@ -77,12 +79,12 @@ export function initializeSocket(httpServer: HttpServer) {
                 });
 
                 chat.lastMessage = message._id;
-                chat.lastMessageAt = new Date(); 
+                chat.lastMessageAt = new Date();
                 await chat.save();
 
                 await message.populate("sender", "name email avatar");
 
-                io.to(`chat:${chatId}`).emit("new-message", message);  
+                io.to(`chat:${chatId}`).emit("new-message", message);
 
                 for (const participantId of chat.participants) {
                     io.to(`user:${participantId}`).emit("new-message", message);
