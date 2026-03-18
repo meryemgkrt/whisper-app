@@ -7,6 +7,7 @@ import useAuthSocial from "../../hooks/useSocialAuth";
 const { width, height } = Dimensions.get("window");
 const AuthScreen = () => {
   const { handleSocialAuth, loadingStrategy } = useAuthSocial();
+  const isLoading = loadingStrategy !== null;
   return (
     <View className="flex-1 bg-surface-dark">
       <View className="absolute inset-0 overflow-hidden"></View>
@@ -66,9 +67,14 @@ const AuthScreen = () => {
           {/* Auth buttons will go here */}
           <View className="flex-row gap-4 pt-10">
             <Pressable
-              disabled={loadingStrategy == "oauth_google"}
-              onPress={() => handleSocialAuth("oauth_google")}
+            
+              
               className="flex-1 flex-row items-center justify-center gap-1 bg-white/95 py-4 rounded-2xl active:scale-[0.97]"
+              disabled={isLoading}
+              accessibilityLabel="Sign in with Google"
+              accessibilityRole="button"
+              onPress={() => !isLoading && handleSocialAuth("oauth_google")}
+
               style={{
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 4 },
@@ -95,8 +101,10 @@ const AuthScreen = () => {
             </Pressable>
 
             <Pressable
-              disabled={loadingStrategy == "oauth_apple"}
-              onPress={() => handleSocialAuth("oauth_apple")}
+              accessibilityRole="button"
+              disabled={isLoading}
+              accessibilityLabel="Continue with Apple"
+              onPress={() => !isLoading && handleSocialAuth("oauth_apple")}
               className="flex-1 flex-row items-center justify-center gap-1 bg-white/10 py-4 rounded-2xl active:scale-[0.97]"
               style={{
                 shadowColor: "#C68642",
