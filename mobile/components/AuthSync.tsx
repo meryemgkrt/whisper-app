@@ -9,20 +9,20 @@ const AuthSync = () => {
   const { mutate: syncUser } = useAuthCallback();
   const hasSynced = useRef(false);
 
-  useEffect(() => {
+   useEffect(() => {
     if (isSignedIn && user && !hasSynced.current) {
       hasSynced.current = true;
 
       syncUser(undefined, {
         onSuccess: (data) => {
-          console.log("✅ User synced successfully", data.user.name);
-          Sentry.logger.info(Sentry.logger.fmt`User synced with backend: ${data.user.name}`, {
+          console.log("✅ User synced with backend:", data.name);
+          Sentry.logger.info(Sentry.logger.fmt`User synced with backend: ${data.name}`, {
             userId: user.id,
-            userName: data.user.name,
+            userName: data.name,
           });
         },
         onError: (error) => {
-          console.error("❌ Failed to sync user");
+          console.log("❌ User sync failed for the user:", error);
           Sentry.logger.error("Failed to sync user with backend", {
             userId: user.id,
             error: error instanceof Error ? error.message : String(error),
