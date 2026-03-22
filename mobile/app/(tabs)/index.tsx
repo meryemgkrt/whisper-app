@@ -1,9 +1,14 @@
-import { View, Text } from 'react-native';
+import { View, Text, ScrollView} from 'react-native';
+import * as Sentry from '@sentry/react-native';
 
 export default function HomeScreen() {
   return (
-    <View className="flex-1 items-center justify-center bg-white">
+    <ScrollView 
+      className="flex-1 bg-surface"
+      contentContainerClassName="items-center justify-center flex-grow"
+    >
       <Text className="text-2xl font-bold text-amber-500">Whisper</Text>
-    </View>
+     
+    </ScrollView>
   );
 }
