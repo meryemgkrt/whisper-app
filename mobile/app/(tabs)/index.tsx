@@ -5,7 +5,7 @@ import {
   FlatList,
   Pressable,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { router, useRouter } from "expo-router";
 import { useChats } from "../../hooks/useChats";
 import ChatItem from "../../components/ChatItem";
 import { Ionicons } from "@expo/vector-icons";
@@ -73,8 +73,8 @@ export default function ChatsTab() {
               iconName="chatbubbles-outline"
               iconColor="#6B6B70"
               iconSize={64}
-              buttonLabel="Start a chat"
-              onPressButton={()=>console.log("pressed")}
+              buttonLabel="New chat"
+              onPressButton={()=>router.push("/new-chat")}
           />
         }
       />
@@ -91,7 +91,8 @@ function Header() {
             Chats
           </Text>
         </View>
-        <Pressable className="size-11 bg-primary rounded-full items-center justify-center active:opacity-70">
+        <Pressable onPress={()=>router.push("/new-chat")}
+        className="size-11 bg-primary rounded-full items-center  justify-center active:opacity-70">
           <Ionicons name="create-outline" size={20} color="#fff" />
         </Pressable>
       </View>
