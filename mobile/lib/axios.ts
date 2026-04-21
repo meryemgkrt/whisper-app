@@ -51,5 +51,5 @@ export const useApi = () => {
         [getToken]
     );
 
-    return { apiWithAuth };
+    return { api, apiWithAuth };
 };

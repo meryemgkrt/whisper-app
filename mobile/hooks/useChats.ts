@@ -1,15 +1,36 @@
-import { useApi } from "../lib/axios";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Chat } from "../types";
-import { useQuery } from "@tanstack/react-query";
+import { useApi } from "../lib/axios";
 
 export const useChats = () => {
-    const api = useApi();
+    const { apiWithAuth } = useApi();
 
     return useQuery({
         queryKey: ["chats"],
         queryFn: async () => {
-            const { data } = await api.get<Chat[]>("/chats");
+            const { data } = await apiWithAuth<Chat[]>({ 
+                method: "GET", 
+                url: "/chats" 
+            });
             return data;
         }
     });
-}
+};
+
+export const useGetOrCreateChat = () => {
+    const { apiWithAuth } = useApi();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (participantId: string) => { 
+            const { data } = await apiWithAuth<Chat>({
+                method: "POST",
+                url: `/chats/with/${participantId}` 
+            });
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["chats"] });
+        }
+    });
+};

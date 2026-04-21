@@ -11,11 +11,14 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  
   "scripts": {
-    "dev": "bun --watch index.ts",
-    "start": "bun index.ts",
-    "build": "bun install "
+    "dev": "bun --watch index.ts",  
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "seed": "bun run src/scripts/seed.ts"
   },
+
   "devDependencies": {
     "@types/bun": "latest"
   },
