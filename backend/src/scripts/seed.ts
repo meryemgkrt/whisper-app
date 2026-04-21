@@ -66,21 +66,21 @@ const SEED_USERS = [
 
 async function seed() {
   try {
-    const mongoURI = process.env.MONGODB_URI || "mongodb://localhost:27017/chat-app";
+    const mongoURI =
+      process.env.MONGODB_URI || "mongodb://localhost:27017/chat-app";
+
     await mongoose.connect(mongoURI);
     console.log("✅ Connected to MongoDB");
 
-    // ✅ TÜM USERS'I SİL (dikkatli kullan!)
-    const deleted = await User.deleteMany({});
-    console.log(`🗑️  Deleted ${deleted.deletedCount} users`);
+    for (const seedUser of SEED_USERS) {
+      await User.findOneAndUpdate(
+        { clerkId: seedUser.clerkId },
+        seedUser,
+        { upsert: true, new: true }
+      );
+    }
 
-    // Yeni user'ları ekle
-    const users = await User.insertMany(SEED_USERS);
-    console.log(`🌱 Seeded ${users.length} users:`);
-    users.forEach((user) => {
-      console.log(`   - ${user.name} (${user.email})`);
-    });
-
+    console.log(`🌱 Seeded/updated ${SEED_USERS.length} users`);
     await mongoose.disconnect();
     console.log("✅ Done!");
     process.exit(0);
