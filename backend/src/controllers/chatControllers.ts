@@ -11,7 +11,7 @@ export async function getChats(req: AuthRequest, res: Response, next: NextFuncti
             .populate("participants", "name email avatar")
             .populate("lastMessage")
             .sort({ lastMessageAt: -1 });
-        
+
         const formattedChats = chats.map(chat => {
             const otherParticipant = chat.participants.find((p: any) => p._id.toString() !== userId);
             return {
@@ -22,7 +22,7 @@ export async function getChats(req: AuthRequest, res: Response, next: NextFuncti
                 createdAt: chat.createdAt,
             };
         });
-        
+
         res.json(formattedChats);
     } catch (error) {
         next(error);
@@ -32,13 +32,13 @@ export async function getChats(req: AuthRequest, res: Response, next: NextFuncti
 export async function getOrCreateChat(req: AuthRequest, res: Response, next: NextFunction) {
     try {
         const userId = req.userId;
-        const participantId = req.params.participantId as string; 
+        const participantId = req.params.participantId as string;
 
         if (!participantId) {
             return res.status(400).json({ message: "Participant ID is required" });
         }
 
-        if (!Types.ObjectId.isValid(participantId)) {  
+        if (!Types.ObjectId.isValid(participantId)) {
             return res.status(400).json({ message: "Participant ID must be a valid ObjectId" });
         }
 
@@ -48,17 +48,19 @@ export async function getOrCreateChat(req: AuthRequest, res: Response, next: Nex
 
         const chat = await Chat.findOneAndUpdate(
             { participants: { $all: [userId, participantId] } },
-            { 
-                participants: [userId, participantId],
+            {
+                $setOnInsert: {           // ✅ sadece yeni oluşturulurken set et
+                    participants: [userId, participantId],
+                }
             },
-            { 
-                upsert: true, 
-                new: true,
-                setDefaultsOnInsert: true 
+            {
+                upsert: true,
+                returnDocument: "after",  // ✅ deprecated new:true yerine
+                setDefaultsOnInsert: true
             }
         )
-        .populate("participants", "name email avatar")
-        .populate("lastMessage");
+            .populate("participants", "name email avatar")
+            .populate("lastMessage");
 
         const otherParticipant = chat.participants.find((p: any) => p._id.toString() !== userId);
 
