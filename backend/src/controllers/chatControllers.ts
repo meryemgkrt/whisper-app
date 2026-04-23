@@ -13,7 +13,7 @@ export async function getChats(req: AuthRequest, res: Response, next: NextFuncti
             .sort({ lastMessageAt: -1 });
 
         const formattedChats = chats.map((chat) => {
-            const otherParticipant = chat.participants.find((p) => p._id.toString() !== userId);
+            const otherParticipant = chat.participants.find((p: any) => p._id.toString() !== userId);
 
             return {
                 _id: chat._id,
@@ -25,16 +25,16 @@ export async function getChats(req: AuthRequest, res: Response, next: NextFuncti
         });
 
         res.json(formattedChats);
-    } catch (error) {
-        res.status(500);
-        next(error);
+   } catch (error) {
+        console.error("❌ getOrCreateChat error:", error);
+        res.status(500).json({ message: "Internal server error" });
     }
 }
 
 export async function getOrCreateChat(req: AuthRequest, res: Response, next: NextFunction) {
     try {
         const userId = req.userId;
-        const { participantId } = req.params;
+        const participantId = req.params.participantId as string;
 
         if (!participantId) {
             res.status(400).json({ message: "Participant ID is required" });
@@ -51,7 +51,6 @@ export async function getOrCreateChat(req: AuthRequest, res: Response, next: Nex
             return;
         }
 
-        // check if chat already exists
         let chat = await Chat.findOne({
             participants: { $all: [userId, participantId] },
         })
@@ -71,17 +70,19 @@ export async function getOrCreateChat(req: AuthRequest, res: Response, next: Nex
             return;
         }
 
-        const otherParticipant = chat.participants.find((p: any) => p._id.toString() !== userId);
+        const otherParticipant = (chat.participants as any[]).find(
+            (p: any) => p._id.toString() !== userId
+        );
 
         res.json({
             _id: chat._id,
             participant: otherParticipant ?? null,
-            lastMessage: chat.lastMessage,
-            lastMessageAt: chat.lastMessageAt,
+            lastMessage: chat.lastMessage ?? null,
+            lastMessageAt: chat.lastMessageAt ?? null,
             createdAt: chat.createdAt,
         });
     } catch (error) {
-        res.status(500);
-        next(error);
+        console.error("❌ getOrCreateChat error:", error);
+        res.status(500).json({ message: "Internal server error" });
     }
 }
