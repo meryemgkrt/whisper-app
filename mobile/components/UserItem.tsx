@@ -9,7 +9,6 @@ type UserItemProps = {
 };
 
 function UserItem({ user, isOnline, onPress }: UserItemProps) {
-  console.log("avatar:", user.name, user.avatar);
   return (
     <Pressable
       className="flex-row items-center py-2.5 active:opacity-70"
@@ -38,7 +37,7 @@ function UserItem({ user, isOnline, onPress }: UserItemProps) {
             {user.name}
           </Text>
           {isOnline && (
-            <Text className="text-xs text-primary font-medium">Online</Text>
+            <Text className="text-xs text-green-500 shadow-lg font-medium">Online</Text>
           )}
         </View>
 

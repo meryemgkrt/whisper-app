@@ -37,7 +37,16 @@ const NewChatScreen = () => {
   const handleUserSelect = (user: User) => {
     getOrCreateChat(user._id, {
       onSuccess: (chat) => {
-        router.push(`/chat/${chat._id}`);
+        router.push({
+          pathname: "/chat/[id]",
+          params:{
+            id: chat._id,
+            participantId:chat.participant._id,
+            name: chat.participant.name,
+            avatar: chat.participant.avatar,
+            
+          }
+        });
       },
       onError: (err: any) => {
         console.error("❌ Chat creation error:", err?.response?.data || err.message);
@@ -82,7 +91,7 @@ const NewChatScreen = () => {
           <View className="flex-1 bg-surface">
             {isLoading || isCreatingChat ? (
               <View className="flex-1 items-center justify-center">
-                <ActivityIndicator size="large" color="#f4a261" />
+                <ActivityIndicator size="large" color="#88f461" />
                 <Text className="text-muted-foreground mt-2">
                   {isLoading ? "Loading users..." : "Creating chat..."}
                 </Text>
