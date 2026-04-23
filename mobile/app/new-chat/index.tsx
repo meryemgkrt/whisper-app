@@ -37,19 +37,24 @@ const NewChatScreen = () => {
   const handleUserSelect = (user: User) => {
     getOrCreateChat(user._id, {
       onSuccess: (chat) => {
-        router.push({
-          pathname: "/chat/[id]",
-          params:{
-            id: chat._id,
-            participantId:chat.participant._id,
-            name: chat.participant.name,
-            avatar: chat.participant.avatar,
-            
-          }
-        });
+        router.dismiss();
+        setTimeout(() => {
+          router.push({
+            pathname: "/chat/[id]",
+            params: {
+              id: chat._id,
+              participantId: chat.participant._id,
+              name: chat.participant.name,
+              avatar: chat.participant.avatar,
+            },
+          });
+        }, 100);
       },
       onError: (err: any) => {
-        console.error("❌ Chat creation error:", err?.response?.data || err.message);
+        console.error(
+          "❌ Chat creation error:",
+          err?.response?.data || err.message,
+        );
       },
     });
   };

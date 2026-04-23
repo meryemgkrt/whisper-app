@@ -1,11 +1,12 @@
-import { View, Text } from 'react-native'
+import { View, Text} from 'react-native'
 import React from 'react'
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ChatDetailScreen = () => {
   return (
-    <View>
-      <Text>[id]</Text>
-    </View>
+    <SafeAreaView className="flex-1">
+      <Text className="text-lg text-white font-bold">[id]</Text>
+    </SafeAreaView>
   )
 }
 

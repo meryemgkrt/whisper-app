@@ -8,6 +8,9 @@ const ChatItem = ({ chat, onPress }: { chat: Chat; onPress: () => void }) => {
   const isOnline = true;
   const isTyping = false;
   const hasUnread = false;
+
+  if (!participant) return null;
+
   return (
     <Pressable
       onPress={onPress}
@@ -15,11 +18,11 @@ const ChatItem = ({ chat, onPress }: { chat: Chat; onPress: () => void }) => {
     >
       <View className="relative">
         <Image
-          source={participant.avatar}
+          source={{ uri: participant.avatar }}
           style={{ width: 56, height: 56, borderRadius: 999 }}
         />
         {isOnline && (
-          <View className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-[2px] border-surface"></View>
+          <View className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-[2px] border-surface" />
         )}
       </View>
 
@@ -30,27 +33,31 @@ const ChatItem = ({ chat, onPress }: { chat: Chat; onPress: () => void }) => {
           >
             {participant.name}
           </Text>
-
           <View className="flex-row items-center gap-2">
             <Text className="text-xs text-subtle-foreground">
-              {chat.lastMessageAt ? formatDistanceToNow(new Date(chat.lastMessageAt), { addSuffix: false }) : "New"}
+              {chat.lastMessageAt
+                ? formatDistanceToNow(new Date(chat.lastMessageAt), { addSuffix: false })
+                : "New"}
             </Text>
             {hasUnread && (
               <View className="w-2.5 h-2.5 bg-primary rounded-full" />
             )}
           </View>
-          <View className="flex-row items-center justify-between mt-1">
-            {isTyping ? (
-                <Text className="text-xs text-primary">Typing...</Text>
+        </View>
 
-            ):(
-                <Text className={`text-sm flex-1 mr-3 ${hasUnread ? "text-foreground font-medium" : "text-subtle-foreground"}`} 
-                numberOfLines={1}>
-                {chat.lastMessage?.text || "No messages yet"}
-                </Text>
-            )}
-          </View>
-        </View>      </View>
+        <View className="flex-row items-center justify-between mt-1">
+          {isTyping ? (
+            <Text className="text-xs text-primary">Typing...</Text>
+          ) : (
+            <Text
+              className={`text-sm flex-1 mr-3 ${hasUnread ? "text-foreground font-medium" : "text-subtle-foreground"}`}
+              numberOfLines={1}
+            >
+              {chat.lastMessage?.text ?? "No messages yet"}
+            </Text>
+          )}
+        </View>
+      </View>
     </Pressable>
   );
 };
