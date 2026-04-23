@@ -1,22 +1,23 @@
 import type { NextFunction, Response } from "express";
 import type { AuthRequest } from "../middleware/auth";
-
 import { Chat } from "../models/Chat";
 import { Types } from "mongoose";
 
 export async function getChats(req: AuthRequest, res: Response, next: NextFunction) {
     try {
         const userId = req.userId;
+
         const chats = await Chat.find({ participants: userId })
             .populate("participants", "name email avatar")
             .populate("lastMessage")
             .sort({ lastMessageAt: -1 });
 
-        const formattedChats = chats.map(chat => {
-            const otherParticipant = chat.participants.find((p: any) => p._id.toString() !== userId);
+        const formattedChats = chats.map((chat) => {
+            const otherParticipant = chat.participants.find((p) => p._id.toString() !== userId);
+
             return {
                 _id: chat._id,
-                participants: otherParticipant ?? null,
+                participant: otherParticipant ?? null,
                 lastMessage: chat.lastMessage,
                 lastMessageAt: chat.lastMessageAt,
                 createdAt: chat.createdAt,
@@ -25,6 +26,7 @@ export async function getChats(req: AuthRequest, res: Response, next: NextFuncti
 
         res.json(formattedChats);
     } catch (error) {
+        res.status(500);
         next(error);
     }
 }
@@ -32,46 +34,54 @@ export async function getChats(req: AuthRequest, res: Response, next: NextFuncti
 export async function getOrCreateChat(req: AuthRequest, res: Response, next: NextFunction) {
     try {
         const userId = req.userId;
-        const participantId = req.params.participantId as string;
+        const { participantId } = req.params;
 
         if (!participantId) {
-            return res.status(400).json({ message: "Participant ID is required" });
+            res.status(400).json({ message: "Participant ID is required" });
+            return;
         }
 
         if (!Types.ObjectId.isValid(participantId)) {
-            return res.status(400).json({ message: "Participant ID must be a valid ObjectId" });
+            res.status(400).json({ message: "Invalid participant ID" });
+            return;
         }
 
         if (userId === participantId) {
-            return res.status(400).json({ message: "Cannot create chat with yourself" });
+            res.status(400).json({ message: "Cannot create chat with yourself" });
+            return;
         }
 
-        const chat = await Chat.findOneAndUpdate(
-            { participants: { $all: [userId, participantId] } },
-            {
-                $setOnInsert: {           // ✅ sadece yeni oluşturulurken set et
-                    participants: [userId, participantId],
-                }
-            },
-            {
-                upsert: true,
-                returnDocument: "after",  
-                setDefaultsOnInsert: true
-            }
-        )
+        // check if chat already exists
+        let chat = await Chat.findOne({
+            participants: { $all: [userId, participantId] },
+        })
             .populate("participants", "name email avatar")
             .populate("lastMessage");
+
+        if (!chat) {
+            const newChat = new Chat({ participants: [userId, participantId] });
+            await newChat.save();
+            chat = await Chat.findById(newChat._id)
+                .populate("participants", "name email avatar")
+                .populate("lastMessage");
+        }
+
+        if (!chat) {
+            res.status(500).json({ message: "Chat could not be created" });
+            return;
+        }
 
         const otherParticipant = chat.participants.find((p: any) => p._id.toString() !== userId);
 
         res.json({
             _id: chat._id,
-            participant: otherParticipant ?? null,  
+            participant: otherParticipant ?? null,
             lastMessage: chat.lastMessage,
             lastMessageAt: chat.lastMessageAt,
             createdAt: chat.createdAt,
         });
     } catch (error) {
+        res.status(500);
         next(error);
     }
 }
