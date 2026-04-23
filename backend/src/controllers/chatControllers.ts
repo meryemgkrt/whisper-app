@@ -55,7 +55,7 @@ export async function getOrCreateChat(req: AuthRequest, res: Response, next: Nex
             },
             {
                 upsert: true,
-                returnDocument: "after",  // ✅ deprecated new:true yerine
+                returnDocument: "after",  
                 setDefaultsOnInsert: true
             }
         )
@@ -66,7 +66,7 @@ export async function getOrCreateChat(req: AuthRequest, res: Response, next: Nex
 
         res.json({
             _id: chat._id,
-            participants: otherParticipant ?? null,
+            participant: otherParticipant ?? null,  
             lastMessage: chat.lastMessage,
             lastMessageAt: chat.lastMessageAt,
             createdAt: chat.createdAt,
