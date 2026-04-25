@@ -2,6 +2,7 @@ import { Image } from "expo-image";
 import { Pressable, Text, View } from "react-native";
 import { User } from "../types";
 
+
 type UserItemProps = {
   user: User;
   isOnline: boolean;
@@ -9,6 +10,7 @@ type UserItemProps = {
 };
 
 function UserItem({ user, isOnline, onPress }: UserItemProps) {
+  
   return (
     <Pressable
       className="flex-row items-center py-2.5 active:opacity-70"

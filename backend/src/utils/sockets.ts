@@ -12,7 +12,7 @@ export function initializeSocket(httpServer: HttpServer) {
         "http://localhost:8081",
         "http://localhost:5173",
         process.env.FRONTEND_URL
-    ].filter(Boolean) as string[];  // ✅ undefined'ları filtrele
+    ].filter(Boolean) as string[];
 
     const io = new SocketServer(httpServer, {
         cors: {
@@ -29,7 +29,7 @@ export function initializeSocket(httpServer: HttpServer) {
             const clerkId = session.sub;
             const user = await User.findOne({ clerkId });
             if (!user) return next(new Error("User not found"));
-            
+
             socket.data.userId = user._id.toString();
             next();
         } catch (error: any) {
@@ -40,7 +40,6 @@ export function initializeSocket(httpServer: HttpServer) {
     io.on("connection", (socket) => {
         const userId = socket.data.userId;
 
-        // ✅ Safety check
         if (!userId) {
             socket.disconnect();
             return;
@@ -66,7 +65,7 @@ export function initializeSocket(httpServer: HttpServer) {
                     _id: chatId,
                     participants: userId
                 });
-                
+
                 if (!chat) {
                     socket.emit("socket-error", { message: "Chat not found or access denied" });
                     return;
@@ -92,6 +91,14 @@ export function initializeSocket(httpServer: HttpServer) {
             } catch (error) {
                 socket.emit("socket-error", { message: "Failed to send message" });
             }
+        });
+
+        socket.on("typing", ({ chatId }: { chatId: string }) => {
+            socket.to(`chat:${chatId}`).emit("typing", { chatId, userId });
+        });
+
+        socket.on("stop-typing", ({ chatId }: { chatId: string }) => {
+            socket.to(`chat:${chatId}`).emit("stop-typing", { chatId, userId });
         });
 
         socket.on("disconnect", () => {

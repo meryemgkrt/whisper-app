@@ -2,6 +2,7 @@ import { useAuthCallback } from "../hooks/useAuth";
 import { useEffect, useRef } from "react";
 import { useAuth, useUser } from "@clerk/expo";
 import * as Sentry from "@sentry/react-native";
+import { useSocket } from "../lib/useSocket";
 
 const AuthSync = () => {
   const { isSignedIn } = useAuth();
@@ -9,6 +10,7 @@ const AuthSync = () => {
   const { mutate: syncUser } = useAuthCallback();
   const hasSynced = useRef(false);
 
+  
   useEffect(() => {
     if (isSignedIn && user && !hasSynced.current) {
       hasSynced.current = true;
