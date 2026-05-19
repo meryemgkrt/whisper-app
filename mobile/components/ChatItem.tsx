@@ -2,14 +2,16 @@ import { View, Text, Pressable } from "react-native";
 import { Chat } from "../types";
 import { Image } from "expo-image";
 import { formatDistanceToNow } from "date-fns";
+import { useSocket } from "../lib/useSocket";
 
 const ChatItem = ({ chat, onPress }: { chat: Chat; onPress: () => void }) => {
   const participant = chat.participant;
-  const isOnline = true;
-  const isTyping = false;
-  const hasUnread = false;
 
-  if (!participant) return null;
+  const {onlineUsers, typingUsers, unreadChats} =useSocket()
+ const isOnline = participant ? onlineUsers.has(participant._id) : false;
+  const isTyping = typingUsers.get(chat._id) === participant?._id;
+  const hasUnread = unreadChats.has(chat._id);
+  
 
   return (
     <Pressable

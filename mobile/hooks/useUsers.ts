@@ -8,15 +8,16 @@ export const useUsers = () => {
     return useQuery({
         queryKey: ["users"],
         queryFn: async () => {
-            const { data } = await apiWithAuth<{ users: User[] }>({ 
-                method: "GET", 
-                url: "/users" 
+            const { data } = await apiWithAuth<{ users: User[] }>({
+                method: "GET",
+                url: "/users"
             });
-            return data.users; 
+            console.log("👥 Users response:", JSON.stringify(data));
+            return data.users ?? [];
         },
-        staleTime: 0,           
-        gcTime: 0,              
-        refetchOnMount: true,   
-        refetchOnWindowFocus: true  
+        staleTime: 0,
+        gcTime: 0,
+        refetchOnMount: true,
+        refetchOnWindowFocus: true
     });
 };

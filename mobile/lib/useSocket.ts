@@ -4,7 +4,7 @@ import { MessageSender, Message, Chat } from "../types";
 import { QueryClient } from "@tanstack/react-query";
 import * as Sentry from '@sentry/react-native';
 
-const SOCKET_URL = "https://whisper-app-lhf2v.sevalla.app";
+const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL?.replace("/api", "") ?? "https://whisper-app-lhf2v.sevalla.app";
 
 interface SocketState {
   socket: Socket | null;
@@ -75,19 +75,37 @@ export const useSocket = create<SocketState>((set, get) => ({
       Sentry.logger.error("Socket error", { message: error.message });
     });
 
+    socket.on("typing", ({ chatId, userId }: { chatId: string; userId: string }) => {
+      set((state) => {
+        const next = new Map(state.typingUsers);
+        next.set(chatId, userId);
+        return { typingUsers: next };
+      });
+    });
+
+    socket.on("stop-typing", ({ chatId }: { chatId: string }) => {
+      set((state) => {
+        const next = new Map(state.typingUsers);
+        next.delete(chatId);
+        return { typingUsers: next };
+      });
+    });
+
     socket.on("new-message", (message: Message) => {
       const senderId = (message.sender as MessageSender)._id;
       const { currentChatId } = get();
 
-      // mesaj listesini güncelle
-      queryClient.setQueryData<Message[]>(["messages", message.chat], (old) => {
-        if (!old) return [message];
-        const filtered = old.filter((msg) => !msg._id.startsWith("temp-"));
-        if (filtered.some((msg) => msg._id === message._id)) return filtered;
-        return [...filtered, message];
-      });
+      // ✅ { messages: Message[] } yapısına uygun
+      queryClient.setQueryData<{ messages: Message[] }>(
+        ["messages", message.chat],
+        (old) => {
+          if (!old) return { messages: [message] };
+          const filtered = old.messages.filter((msg) => !msg._id.startsWith("temp-"));
+          if (filtered.some((msg) => msg._id === message._id)) return { messages: filtered };
+          return { messages: [...filtered, message] };
+        }
+      );
 
-      // chats listesinde lastMessage güncelle
       queryClient.setQueryData<Chat[]>(["chats"], (oldChats) => {
         return oldChats?.map((chat) => {
           if (chat._id !== message.chat) return chat;
@@ -104,12 +122,22 @@ export const useSocket = create<SocketState>((set, get) => ({
         });
       });
 
-      // aktif chat değilse unread ekle
       if (currentChatId !== message.chat) {
-        set((state) => ({
-          unreadChats: new Set([...state.unreadChats, message.chat]),
-        }));
+        const chats = queryClient.getQueryData<Chat[]>(["chats"]);
+        const chat = chats?.find((c) => c._id === message.chat);
+        if (chat?.participant && senderId === chat.participant._id) {
+          set((state) => ({
+            unreadChats: new Set([...state.unreadChats, message.chat]),
+          }));
+        }
       }
+
+      // typing göstergesini temizle
+      set((state) => {
+        const next = new Map(state.typingUsers);
+        next.delete(message.chat);
+        return { typingUsers: next };
+      });
     });
 
     set({ socket, queryClient });
@@ -165,20 +193,15 @@ export const useSocket = create<SocketState>((set, get) => ({
       updatedAt: new Date().toISOString(),
     };
 
-    const errorHandler = (error: { message: string }) => {
-      Sentry.logger.error("Failed to send message", { chatId, error: error.message });
-      queryClient.setQueryData<Message[]>(["messages", chatId], (old = []) => {
-        return old.filter((msg) => msg._id !== tempId);
-      });
-      socket.off("socket-error", errorHandler);
-    };
+    // ✅ { messages: Message[] } yapısına uygun
+    queryClient.setQueryData<{ messages: Message[] }>(
+      ["messages", chatId],
+      (old) => {
+        const prev = old?.messages ?? [];
+        return { messages: [...prev, optimisticMessage] };
+      }
+    );
 
-    // optimistic mesaj ekle
-    queryClient.setQueryData<Message[]>(["messages", chatId], (old = []) => {
-      return [...old, optimisticMessage];
-    });
-
-    // chats listesinde lastMessage güncelle
     queryClient.setQueryData<Chat[]>(["chats"], (oldChats) => {
       return oldChats?.map((chat) => {
         if (chat._id !== chatId) return chat;
@@ -196,13 +219,29 @@ export const useSocket = create<SocketState>((set, get) => ({
     });
 
     socket.emit("send-message", { chatId, text });
-    socket.on("socket-error", errorHandler);
+
+    Sentry.logger.info("Message sent", { chatId, messageLength: text.length });
+
+    const errorHandler = (error: { message: string }) => {
+      Sentry.logger.error("Failed to send message", { chatId, error: error.message });
+
+      // ✅ { messages: Message[] } yapısına uygun
+      queryClient.setQueryData<{ messages: Message[] }>(
+        ["messages", chatId],
+        (old) => {
+          const prev = old?.messages ?? [];
+          return { messages: prev.filter((msg) => msg._id !== tempId) };
+        }
+      );
+    };
+
+    socket.once("socket-error", errorHandler);
   },
 
   sendTyping: (chatId: string, isTyping: boolean) => {
     const { socket } = get();
     if (socket?.connected) {
-      socket.emit("typing", { chatId, isTyping });
+      socket.emit(isTyping ? "typing" : "stop-typing", { chatId });
     }
   },
 }));

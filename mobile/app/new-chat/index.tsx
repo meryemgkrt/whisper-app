@@ -14,25 +14,30 @@ import { useUsers } from "../../hooks/useUsers";
 import { useGetOrCreateChat } from "../../hooks/useChats";
 import { User } from "../../types";
 import UserItem from "../../components/UserItem";
+import { useSocket } from "../../lib/useSocket";
+import { useCurrentUser } from "../../hooks/useAuth";
 
 const NewChatScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: allUsers = [], isLoading, error } = useUsers();
-  const { mutate: getOrCreateChat, isPending: isCreatingChat } =
-    useGetOrCreateChat();
+  const { mutate: getOrCreateChat, isPending: isCreatingChat } = useGetOrCreateChat();
+  const { onlineUsers } = useSocket();
+  const { data: currentUser } = useCurrentUser();
+
+  // ✅ konsola yazdır
+  console.log("currentUser._id:", currentUser?._id);
 
   const users = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-
-    if (!query) return allUsers;
-
-    return allUsers.filter((u) => {
+    const filtered = allUsers.filter((u) => u._id !== currentUser?._id);
+    if (!query) return filtered;
+    return filtered.filter((u) => {
       return (
         u.name?.toLowerCase().includes(query) ||
         u.email?.toLowerCase().includes(query)
       );
     });
-  }, [allUsers, searchQuery]);
+  }, [allUsers, searchQuery, currentUser]);
 
   const handleUserSelect = (user: User) => {
     getOrCreateChat(user._id, {
@@ -138,7 +143,7 @@ const NewChatScreen = () => {
                     key={user._id}
                     user={user}
                     onPress={() => handleUserSelect(user)}
-                    isOnline={true}
+                    isOnline={onlineUsers.has(user._id)}
                   />
                 ))}
               </ScrollView>
