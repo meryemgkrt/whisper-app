@@ -12,7 +12,7 @@ initializeSocket(server)
 
 connectDB()
 .then(()=>{
-    server.listen(PORT, () => {
+    server.listen(PORT, "0.0.0.0", () => {  // ✅ 0.0.0.0 eklendi
         console.log(`Server is running on port ${PORT}`);
     });
 })
@@ -20,4 +20,3 @@ connectDB()
     console.error("Failed to connect to the database", err);
     process.exit(1);
 });
-    

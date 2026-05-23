@@ -7,8 +7,11 @@ export const useAuthCallback = () => {
 
     return useMutation({
         mutationFn: async () => {
-            const { data } = await apiWithAuth<{ user: User }>({ method: "POST", url: "/auth/callback" });
-            return data.user;
+            const { data } = await apiWithAuth<{ user: User }>({ 
+                method: "POST", 
+                url: "/auth/callback" 
+            });
+            return data; // ✅ { user: User } olarak döndür — AuthSync'te data.user.name kullanıyor
         }
     });
 };
@@ -19,8 +22,11 @@ export const useCurrentUser = () => {
     return useQuery({
         queryKey: ["currentUser"],
         queryFn: async () => {
-            const { data } = await apiWithAuth<{ user: User }>({ method: "GET", url: "/auth/me" });
-            return data.user;
+            const { data } = await apiWithAuth<{ user: User }>({ 
+                method: "GET", 
+                url: "/auth/me" 
+            });
+            return data.user; // ✅ direkt User döndür
         }
     });
 }
