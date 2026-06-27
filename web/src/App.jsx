@@ -1,24 +1,19 @@
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-} from "@clerk/clerk-react";
-import React from "react";
-import "./App.css";
+import { Navigate, Routes, Route } from "react-router-dom"
+import HomePage from "./pages/HomePage"
+import ChatPage from "./pages/ChatPage"
+import { useAuth } from "@clerk/clerk-react"
+import PageRouter from "./components/PageRouter"
+import useUserSync from "./hooks/useUserSync"
 
 export default function App() {
+  const { isLoaded, isSignedIn } = useAuth()
+  useUserSync()
+  if (!isLoaded) return <PageRouter />
+  
   return (
-    <div>
-      <h1 className="text-3xl font-bold underline">Hello, World!</h1>
-      <SignedOut>
-        <SignInButton mode="modal"/>
-      </SignedOut>
-
-      <SignedIn>
-        <UserButton />
-      </SignedIn>
-    </div>
-  );
+    <Routes>
+      <Route path="/" element={!isSignedIn ? <HomePage /> : <Navigate to="/chat" />} />
+      <Route path="/chat" element={isSignedIn ? <ChatPage /> : <Navigate to="/" />} />
+    </Routes>
+  )
 }

@@ -5,20 +5,20 @@
     "cors": "2.8.5",
     "express": "4.21.2",
     "mongoose": "^9.1.6",
-    "socket.io": "4.8.2"
+    "socket.io": "4.8.2",
+    "socket.io-client": "^4.8.3",
+    "zustand": "^5.0.14"
   },
   "name": "backend",
   "module": "index.ts",
   "type": "module",
   "private": true,
-  
   "scripts": {
-    "dev": "bun --watch index.ts",  
+    "dev": "bun --watch index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "seed": "bun run src/scripts/seed.ts"
   },
-
   "devDependencies": {
     "@types/bun": "latest"
   },
